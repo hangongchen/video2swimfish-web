@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Video2SwimFish</title>
+    <meta
+      name="description"
+      content="Project page for Video2SwimFish, an automated pipeline and benchmark for building controllable fish assets from real-fish videos."
+    />
+    <meta property="og:title" content="Video2SwimFish" />
+    <meta
+      property="og:description"
+      content="An automated pipeline for reconstructing controllable fish models and biological locomotion from real fish videos."
+    />
+    <meta property="og:image" content="./og.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <h1>
+          Video2SwimFish: An Automated Pipeline for Reconstructing Controllable
+          Fish Models and Biological Locomotion from Real Fish Videos
+        </h1>
+        <p class="authors">Video2SwimFish Team</p>
+        <p class="venue">Project website</p>
+
+        <div class="links" aria-label="Project links">
+          <a href="https://youtu.be/ZrKgq_Yi6fk" target="_blank" rel="noopener">Video</a>
+          <a href="https://github.com/hangongchen/video2swimfish-web" target="_blank" rel="noopener">Code</a>
+          <a href="https://huggingface.co/datasets/video2swimfish/video2swimfish-dataset" target="_blank" rel="noopener">Data</a>
+        </div>
+
+        <figure id="video" class="main-video">
+          <div class="video-frame">
+            <video
+              autoplay
+              muted
+              loop
+              controls
+              playsinline
+              preload="auto"
+            >
+              <source
+                src="./rov_fish_capture_success_slow_0p5x_nozoom_v6.mp4"
+                type="video/mp4"
+              />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <figcaption>
+            ROV capture demonstration. The full video is also available on
+            <a href="https://youtu.be/ZrKgq_Yi6fk" target="_blank" rel="noopener">YouTube</a>.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section id="paper" class="section narrow">
+        <h2>Abstract</h2>
+        <p>
+          We present <strong>Video2SwimFish</strong>, an automated pipeline and
+          benchmark for building controllable fish assets from real-fish videos
+          for underwater embodied AI. Given synchronized multi-view videos of an
+          individual fish, the pipeline reconstructs a metrically scaled
+          deformable mesh from a VLM-selected canonical frame, generates
+          internal articulation adapted to that individual’s morphology through
+          a VLM actor–critic loop, and extracts a Biological Locomotion Manifold
+          (BLM) from the fish's observed midline curvature. The BLM provides a
+          low-dimensional action space bounded by real-fish motion, enabling an
+          individual swimming policy to be learned for each reconstructed fish.
+          We release two paired datasets: synchronized top- and front-view
+          recordings of 120 individual fish across 6 species, and the
+          controllable assets and individual swimming policies derived from
+          them. Because every asset is tied to the animal it came from, the
+          dataset supports a benchmark that evaluates locomotion learning not
+          only on task success but on fidelity to that individual in trajectory
+          shape, body curvature, and tail-beat frequency, across trajectory
+          following, reward-free swimming behavior transfer from video, and a
+          downstream case study in which a simulated BlueROV underwater robot
+          captures one of the assets. We find that task success and locomotion
+          fidelity do not necessarily improve together: the method achieving the
+          highest task completion is not the method achieving the highest
+          locomotion fidelity, and we identify faithful reproduction of
+          individual animal locomotion as an open challenge for the community.
+        </p>
+      </section>
+
+      <section id="pipeline" class="section">
+        <h2>Pipeline Overview</h2>
+        <p class="section-intro">
+          Given synchronized multi-view real fish videos, Video2SwimFish
+          reconstructs individual fish meshes with controllable articulations,
+          derives a Biological Locomotion Manifold from real swimming motion,
+          and learns individual swimming policies for downstream interaction.
+        </p>
+        <figure class="paper-figure">
+          <img
+            src="./pipeline-overview.png"
+            alt="Overview of the Video2SwimFish pipeline"
+          />
+          <figcaption>
+            Figure 1: Overview of Video2SwimFish. Given multi-view real fish
+            videos, Video2SwimFish reconstructs individual fish meshes with
+            controllable articulations and derives a Biological Locomotion
+            Manifold (BLM) from real-fish swimming motion. Reinforcement
+            learning then uses the BLM to learn an individual swimming policy
+            for each controllable fish, producing a dataset of biologically
+            grounded, controllable fish assets for downstream embodied-agent
+            learning and interaction.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section id="method" class="section">
+        <h2>Reconstruction and Articulation</h2>
+        <p class="section-intro">
+          The articulation pipeline selects a canonical frame from multi-view
+          video, reconstructs a 3D fish mesh with Meshy, and iteratively refines
+          skeleton placement through an actor-critic VLM loop until the critic
+          accepts the generated articulation.
+        </p>
+        <figure class="paper-figure">
+          <img
+            src="./framework-overview.png"
+            alt="Mesh reconstruction and VLM-based articulation generation framework"
+          />
+          <figcaption>
+            Figure 2: The Video2SwimFish articulation generation pipeline. A VLM
+            selects the most canonical frame from the multi-view video, from
+            which Meshy reconstructs a 3D fish mesh. An actor VLM then proposes
+            a skeleton as a list of bone templates with positions and sizes, and
+            a critic VLM scores it and returns feedback; the two iterate until
+            the critic accepts.
+          </figcaption>
+        </figure>
+        <div class="method-points">
+          <article>
+            <h3>3D Mesh Generation</h3>
+            <p>
+              A canonical frame is selected from video and reconstructed into a
+              fish mesh, then scaled using estimated body length. The latest
+              paper reports a mean affine-aligned silhouette IoU of 0.88.
+            </p>
+          </article>
+          <article>
+            <h3>VLM-based Articulation</h3>
+            <p>
+              An actor VLM proposes bone templates, positions, and sizes; a
+              critic VLM scores the proposal and returns corrective feedback.
+            </p>
+          </article>
+          <article>
+            <h3>Biological Locomotion Manifold</h3>
+            <p>
+              Real-fish curvature profiles are projected into a low-dimensional
+              action representation for reinforcement learning.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="benchmark" class="section">
+        <h2>Benchmark</h2>
+        <p class="section-intro">
+          Video2SwimFish evaluates locomotion learning on both task success and
+          fidelity to the individual fish in trajectory shape, body curvature,
+          and tail-beat frequency.
+        </p>
+        <div class="columns">
+          <article>
+            <h3>Tasks</h3>
+            <ul>
+              <li>Task 1: Trajectory Following</li>
+              <li>Task 2: Free Swimming from Video</li>
+              <li>Case Study: BlueROV Underwater Robot Capture</li>
+            </ul>
+          </article>
+          <article>
+            <h3>Methods</h3>
+            <ul>
+              <li>Joint RL</li>
+              <li>Joint RL + AMP</li>
+              <li>CPG + RL</li>
+              <li>BCO + RL</li>
+              <li>BLM + RL</li>
+              <li>BLM + IL</li>
+            </ul>
+          </article>
+          <article>
+            <h3>Metrics</h3>
+            <ul>
+              <li>Completion rate</li>
+              <li>Fréchet distance</li>
+              <li>Curvature Wasserstein distance</li>
+              <li>Tail-beat frequency error</li>
+              <li>ROV capture success</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section results-section">
+        <h2>Results</h2>
+        <div class="results-grid">
+          <figure>
+            <video autoplay muted loop playsinline preload="auto">
+              <source
+                src="./rov_fish_capture_success_slow_0p5x_nozoom_v6.mp4"
+                type="video/mp4"
+              />
+              Your browser does not support the video tag.
+            </video>
+            <figcaption>ROV capture demonstration.</figcaption>
+          </figure>
+          <figure>
+            <img
+              class="result-image"
+              src="./trajectory-following-results.png"
+              alt="Task 1 trajectory-following comparison from the paper"
+            />
+            <figcaption>
+              Figure 3: Qualitative comparison of five methods following the
+              same reference trajectory in Task 1. Snapshots are shown at
+              0.4-s intervals. The dashed black curve denotes the reference
+              trajectory, the orange trail shows the simulated fish's executed
+              path, and the star marks the real fish's position on the
+              reference trajectory at each time step. Completion status is
+              indicated on the right.
+            </figcaption>
+          </figure>
+          <figure>
+            <img
+              class="result-image"
+              src="./task1-quantitative-results.png"
+              alt="Task 1 trajectory-following quantitative results"
+            />
+            <figcaption>
+              Table 1: Task 1 trajectory following on twelve fish (two per
+              species): completion rate, Fréchet distance (BL), curvature
+              Wasserstein distance W1(κ), dominant frequency error Δf(Hz) and
+              speed error Δv(BL/s); mean over fish. Best per column in bold.
+            </figcaption>
+          </figure>
+          <figure>
+            <img
+              class="result-image"
+              src="./quantitative-results.png"
+              alt="Task 2 free-swimming and BlueROV capture quantitative results"
+            />
+            <figcaption>
+              Table 2: Task 2 free swimming from video on six fish (one per
+              species): 20 real initial states, 5 s roll-outs, no reward. Best
+              per column in bold. Table 3: Case Study: ROV capture of
+              video-driven fish.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="release" class="section narrow">
+        <h2>Code and Data</h2>
+        <p>
+          The project website, paired videos, controllable assets, and
+          individual policies are prepared for public release. Code and data
+          links will be updated as the public repositories are finalized.
+        </p>
+        <div class="release-box">
+          <span>Paper: under review</span>
+          <span>Code: GitHub repository</span>
+          <span>Dataset: Hugging Face release</span>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
