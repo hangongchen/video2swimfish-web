@@ -232,6 +232,14 @@ p {
   background: white;
 }
 
+.dataset-figure {
+  max-width: 980px;
+}
+
+.dataset-figure img {
+  object-fit: contain;
+}
+
 .method-points {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
