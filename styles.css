@@ -59,13 +59,29 @@ h1 {
 .authors {
   margin: 8px 0 0;
   color: #333;
-  font-size: 21px;
+  font-size: clamp(20px, 2.5vw, 32px);
+  font-style: italic;
+  line-height: 1.35;
 }
 
-.venue {
-  margin: 4px 0 0;
+.authors sup {
+  font-size: 0.58em;
+  font-style: normal;
+}
+
+.affiliations {
+  margin: 8px auto 0;
   color: var(--muted);
-  font-size: 17px;
+  font-size: clamp(15px, 1.7vw, 20px);
+  line-height: 1.45;
+}
+
+.affiliations p {
+  margin: 2px 0;
+}
+
+.affiliations sup {
+  font-size: 0.72em;
 }
 
 .links {
