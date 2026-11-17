@@ -237,6 +237,7 @@ p {
 }
 
 .dataset-figure img {
+  height: auto;
   object-fit: contain;
 }
 
@@ -309,10 +310,11 @@ ul {
 
 .results-grid video {
   aspect-ratio: 16 / 9;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .results-grid img.result-image {
+  height: auto;
   border: 1px solid var(--line);
 }
 
@@ -321,6 +323,42 @@ ul {
   margin: 10px auto 0;
   font-size: 13.5px;
   line-height: 1.42;
+}
+
+.results-grid > h3 {
+  margin: 16px 0 -24px;
+  font-size: 22px;
+  text-align: center;
+}
+
+.results-grid > p {
+  max-width: 830px;
+  margin: 0 auto -10px;
+}
+
+.figure-link {
+  display: block;
+}
+
+.results-grid figure[id^="table-"] {
+  max-width: 860px;
+}
+
+.supplementary-results {
+  max-width: 980px;
+  margin: 36px auto 0;
+}
+
+.supplementary-results summary {
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.supplementary-results[open] > .results-grid {
+  margin-top: 24px;
 }
 
 .placeholder {

@@ -67,271 +67,251 @@
 
       <section id="paper" class="section narrow">
         <h2>Abstract</h2>
-        <p>
-          We present <strong>Video2SwimFish</strong>, an automated pipeline and
-          benchmark for building controllable fish assets from real-fish videos
-          for underwater embodied AI. Given synchronized multi-view videos of an
-          individual fish, the pipeline reconstructs a metrically scaled
-          deformable mesh from a VLM-selected canonical frame, generates
-          internal articulation adapted to that individual’s morphology through
-          a VLM actor–critic loop, and extracts a Biological Locomotion Manifold
-          (BLM) from the fish's observed midline curvature. The BLM provides a
-          low-dimensional action space bounded by real-fish motion, enabling an
-          individual swimming policy to be learned for each reconstructed fish.
-          We release two paired datasets: synchronized top- and front-view
-          recordings of 120 individual fish across 6 species, and the
-          controllable assets and individual swimming policies derived from
-          them. Because every asset is tied to the animal it came from, the
-          dataset supports a benchmark that evaluates locomotion learning not
-          only on task success but on fidelity to that individual in trajectory
-          shape, body curvature, and tail-beat frequency, across trajectory
-          following, reward-free swimming behavior transfer from video, and a
-          downstream case study in which a simulated BlueROV underwater robot
-          captures one of the assets. We find that task success and locomotion
-          fidelity do not necessarily improve together: the method achieving the
-          highest task completion is not the method achieving the highest
-          locomotion fidelity, and we identify faithful reproduction of
-          individual animal locomotion as an open challenge for the community.
-        </p>
+        <p>We present <strong>Video2SwimFish</strong>, an automated pipeline and benchmark for building controllable fish assets from real-fish videos for underwater embodied AI. Given synchronized multi-view videos of an individual fish, the pipeline generates a metrically scaled deformable mesh from a VLM-selected canonical frame, builds internal articulation adapted to that individual’s morphology through a VLM actor–critic loop, and extracts a Biological Locomotion Manifold (BLM). The BLM provides a low-dimensional action space bounded by real-fish motion. Compared with learning directly in joint space, it lets the individual swimming policy of each reconstructed fish converge faster and reach a higher task success rate. We release two paired datasets: synchronized top- and front-view recordings of 120 individual fish across 6 species, and the controllable assets and individual swimming policies derived from them. Because every asset is tied to the animal it came from, the dataset supports a benchmark that evaluates locomotion learning not only on task success but on fidelity to that individual’s locomotion behavior. We evaluate on three tasks: 3D trajectory following, target reaching, and capture of the assets by a simulated BlueROV underwater robot, together with a human study in which fish experts judge the biological realism of the simulated fish, complementing automated evaluation metrics. We find that task success and locomotion fidelity do not necessarily improve together, and we identify faithful reproduction of individual animal locomotion as an open challenge for the community.</p>
       </section>
 
       <section id="dataset" class="section dataset-section">
         <h2>Dataset Display</h2>
         <figure class="paper-figure dataset-figure">
-          <img
-            src="./dataset-display.png"
-            alt="Dataset display showing full video frames, cropped fish frames, generated meshes, and mesh-bone structures"
-          />
-          <figcaption>
-            Dataset display with full video frames, cropped input frames,
-            generated meshes, and mesh-bone structures across representative
-            fish species and individuals.
-          </figcaption>
+          <img src="./dataset-display.png" width="2629" height="3150" alt="Dataset display showing full video frames, cropped fish frames, generated meshes, and mesh-bone structures" />
+          <figcaption>Dataset display with full video frames, cropped input frames, generated meshes, and mesh-bone structures across representative fish species and individuals.</figcaption>
         </figure>
+        <p class="section-intro">Synchronized top- and front-view recordings of 120 individual fish across six species, with 20 individuals per species. Each fish is recorded alone for two and a half minutes at 32 fps and 2736 &times; 1824 resolution.</p>
+        <div class="results-grid"><figure id="table-5">
+            <a class="figure-link" href="./dataset-summary.png" target="_blank" rel="noopener" aria-label="Open table 5 at full resolution">
+              <img class="result-image" src="./dataset-summary.png" alt="Table 5. Dataset summary. Coverage is the fraction of body length spanned by the bone chain; alignment is the mean angle between each bone axis and the local body centerline." width="2400" height="425" loading="lazy" />
+            </a>
+            <figcaption>Table 5. Dataset summary. Coverage is the fraction of body length spanned by the bone chain; alignment is the mean angle between each bone axis and the local body centerline.</figcaption>
+          </figure></div>
       </section>
 
       <section id="pipeline" class="section">
         <h2>Pipeline Overview</h2>
-        <p class="section-intro">
-          Given synchronized multi-view real fish videos, Video2SwimFish
-          reconstructs individual fish meshes with controllable articulations,
-          derives a Biological Locomotion Manifold from real swimming motion,
-          and learns individual swimming policies for downstream interaction.
-        </p>
-        <figure class="paper-figure">
-          <img
-            src="./pipeline-overview.png"
-            alt="Overview of the Video2SwimFish pipeline"
-          />
-          <figcaption>
-            Figure 1: Overview of Video2SwimFish. Given multi-view real fish
-            videos, Video2SwimFish reconstructs individual fish meshes with
-            controllable articulations and derives a Biological Locomotion
-            Manifold (BLM) from real-fish swimming motion. Reinforcement
-            learning then uses the BLM to learn an individual swimming policy
-            for each controllable fish, producing a dataset of biologically
-            grounded, controllable fish assets for downstream embodied-agent
-            learning and interaction.
-          </figcaption>
-        </figure>
+        <div class="results-grid"><figure id="figure-1">
+            <a class="figure-link" href="./pipeline-overview.png" target="_blank" rel="noopener" aria-label="Open figure 1 at full resolution">
+              <img class="result-image" src="./pipeline-overview.png" alt="Figure 1. Overview of Video2SwimFish. Given multi-view real fish videos, Video2SwimFish generates individual fish meshes with controllable articulations and derives a Biological Locomotion Manifold (BLM) from real-fish swimming motion. Reinforcement learning then uses the BLM to learn an individual swimming policy for each controllable fish, producing a dataset of biologically grounded, controllable fish assets for downstream embodied-agent learning and interaction." width="2400" height="975" loading="lazy" />
+            </a>
+            <figcaption>Figure 1. Overview of Video2SwimFish. Given multi-view real fish videos, Video2SwimFish generates individual fish meshes with controllable articulations and derives a Biological Locomotion Manifold (BLM) from real-fish swimming motion. Reinforcement learning then uses the BLM to learn an individual swimming policy for each controllable fish, producing a dataset of biologically grounded, controllable fish assets for downstream embodied-agent learning and interaction.</figcaption>
+          </figure></div>
       </section>
 
       <section id="method" class="section">
         <h2>Reconstruction and Articulation</h2>
-        <p class="section-intro">
-          The articulation pipeline selects a canonical frame from multi-view
-          video, reconstructs a 3D fish mesh with Meshy, and iteratively refines
-          skeleton placement through an actor-critic VLM loop until the critic
-          accepts the generated articulation.
-        </p>
-        <figure class="paper-figure">
-          <img
-            src="./framework-overview.png"
-            alt="Mesh reconstruction and VLM-based articulation generation framework"
-          />
-          <figcaption>
-            Figure 2: The Video2SwimFish articulation generation pipeline. A VLM
-            selects the most canonical frame from the multi-view video, from
-            which Meshy reconstructs a 3D fish mesh. An actor VLM then proposes
-            a skeleton as a list of bone templates with positions and sizes, and
-            a critic VLM scores it and returns feedback; the two iterate until
-            the critic accepts.
-          </figcaption>
-        </figure>
+        <div class="results-grid"><figure id="figure-2">
+            <a class="figure-link" href="./framework-overview.png" target="_blank" rel="noopener" aria-label="Open figure 2 at full resolution">
+              <img class="result-image" src="./framework-overview.png" alt="Figure 2. The Video2SwimFish articulation generation pipeline. A VLM selects the most canonical frame from the multi-view video, from which Meshy generates a 3D fish mesh. An actor VLM then proposes a skeleton as a list of bone templates with positions and sizes, and a critic VLM scores it and returns feedback; the two iterate until the critic accepts." width="2400" height="570" loading="lazy" />
+            </a>
+            <figcaption>Figure 2. The Video2SwimFish articulation generation pipeline. A VLM selects the most canonical frame from the multi-view video, from which Meshy generates a 3D fish mesh. An actor VLM then proposes a skeleton as a list of bone templates with positions and sizes, and a critic VLM scores it and returns feedback; the two iterate until the critic accepts.</figcaption>
+          </figure></div>
         <div class="method-points">
           <article>
             <h3>3D Mesh Generation</h3>
-            <p>
-              A canonical frame is selected from video and reconstructed into a
-              fish mesh, then scaled using estimated body length. The latest
-              paper reports a mean affine-aligned silhouette IoU of 0.88.
-            </p>
+            <p>Qwen3-VL selects a canonical frame, and Meshy generates a mesh scaled to the measured body length. Across all 120 fish, mean affine-aligned silhouette IoU is 0.91 in the input side view and 0.75 in the unseen top view.</p>
           </article>
           <article>
             <h3>VLM-based Articulation</h3>
-            <p>
-              An actor VLM proposes bone templates, positions, and sizes; a
-              critic VLM scores the proposal and returns corrective feedback.
-            </p>
+            <p>An actor VLM proposes bone templates, positions, and sizes; a critic VLM scores the articulation and returns feedback. The final bone chain is coupled to the deformable fish body in the simulator.</p>
           </article>
           <article>
             <h3>Biological Locomotion Manifold</h3>
-            <p>
-              Real-fish curvature profiles are projected into a low-dimensional
-              action representation for reinforcement learning.
-            </p>
+            <p>Synchronized midlines are fused into a 3D body midline and mapped into lateral and vertical joint angles by inverse kinematics. Eight PCA modes capture 99.6% of the joint-angle variance on average and provide the individual fish's action space.</p>
           </article>
         </div>
       </section>
 
       <section id="benchmark" class="section">
         <h2>Benchmark</h2>
-        <p class="section-intro">
-          Video2SwimFish evaluates locomotion learning on both task success and
-          fidelity to the individual fish in trajectory shape, body curvature,
-          and tail-beat frequency.
-        </p>
+        <p class="section-intro">Locomotion learning is evaluated on task success and biological fidelity. The two swimming tasks use twelve fish, two per species, and three random seeds. The ROV case study uses six fish, one per species. Twelve expert raters assess 25 blinded Task 1 clips.</p>
         <div class="columns">
-          <article>
-            <h3>Tasks</h3>
-            <ul>
-              <li>Task 1: Trajectory Following</li>
-              <li>Task 2: Free Swimming from Video</li>
-              <li>Case Study: BlueROV Underwater Robot Capture</li>
-            </ul>
-          </article>
-          <article>
-            <h3>Methods</h3>
-            <ul>
-              <li>Joint RL</li>
-              <li>Joint RL + AMP</li>
-              <li>CPG + RL</li>
-              <li>BCO + RL</li>
-              <li>BLM + RL</li>
-              <li>BLM + IL</li>
-            </ul>
-          </article>
-          <article>
-            <h3>Metrics</h3>
-            <ul>
-              <li>Completion rate</li>
-              <li>Fréchet distance</li>
-              <li>Curvature Wasserstein distance</li>
-              <li>Tail-beat frequency error</li>
-              <li>ROV capture success</li>
-            </ul>
-          </article>
+          <article><h3>Tasks</h3><ul>
+            <li>Task 1: 3D Trajectory Following</li>
+            <li>Task 2: Target Reaching</li>
+            <li>Case Study: BlueROV Capture</li>
+            <li>Human Study: Perceived Biological Fidelity</li>
+          </ul></article>
+          <article><h3>Methods</h3><ul>
+            <li>Joint RL</li><li>Joint RL + AMP</li><li>CPG + RL</li>
+            <li>BCO + RL</li><li>BLM + RL (Ours)</li>
+          </ul></article>
+          <article><h3>Metrics</h3><ul>
+            <li>Completion rate and Fréchet distance</li>
+            <li>Motion coverage and bending-envelope correlation</li>
+            <li>Speed error</li>
+            <li>Targets reached, time to reach, and timeout rate</li>
+            <li>ROV capture success and epochs to convergence</li>
+            <li>Expert plausibility, path match, speed match, and overall similarity</li>
+          </ul></article>
         </div>
       </section>
 
-      <section class="section results-section">
+      <section id="results" class="section results-section">
         <h2>Results</h2>
         <div class="results-grid">
+          <h3>Task 1: 3D Trajectory Following</h3>
+          <p>BLM + RL completes 0.70 of held-out paths and covers 0.85 of real-fish bending motions. Its median training run reaches a completion rate of 0.5 in 20 epochs, compared with 32 for BCO + RL and 70 for Joint RL.</p>
+          <figure id="figure-3">
+            <a class="figure-link" href="./trajectory-following-results.png" target="_blank" rel="noopener" aria-label="Open figure 3 at full resolution">
+              <img class="result-image" src="./trajectory-following-results.png" alt="Figure 3. The five methods on the same held-out Task 1 trajectory of lake sturgeon 001, side view. Top row: the real fish; other rows: one method each; columns: time. Dashed gray: the real fish’s reference trajectory; orange: path swum so far; check/cross: completed or not." width="2400" height="1149" loading="lazy" />
+            </a>
+            <figcaption>Figure 3. The five methods on the same held-out Task 1 trajectory of lake sturgeon 001, side view. Top row: the real fish; other rows: one method each; columns: time. Dashed gray: the real fish’s reference trajectory; orange: path swum so far; check/cross: completed or not.</figcaption>
+          </figure>
           <figure>
             <video autoplay muted loop controls playsinline preload="metadata">
-              <source
-                src="./reach-10-targets.mp4"
-                type="video/mp4"
-              />
+              <source src="./five-baseline-blm.mp4" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
-            <figcaption>
-              Reach 10 Targets task. View the
-              <a href="https://reach-10-task.vercel.app/" target="_blank" rel="noopener">full task page</a>.
-            </figcaption>
+            <figcaption>BLM rollout for the five-baseline fish trajectory comparison. View the <a href="https://5-baseline-with-one-real-fish.vercel.app/" target="_blank" rel="noopener">full task page</a>.</figcaption>
           </figure>
+          <figure id="figure-4">
+            <a class="figure-link" href="./trajectory-following-3d.png" target="_blank" rel="noopener" aria-label="Open figure 4 at full resolution">
+              <img class="result-image" src="./trajectory-following-3d.png" alt="Figure 4. The BLM+RL episode of Figure 3 in 3D. Dashed gray: the real fish’s reference path; orange: the simulated fish’s trail; star: start; red dot: target. World view: the whole episode. Close-up view: the fish’s body and midline. Full videos of all methods: videos/task1_trajectory_following/ in the supplementary material." width="1339" height="694" loading="lazy" />
+            </a>
+            <figcaption>Figure 4. The BLM+RL episode of Figure 3 in 3D. Dashed gray: the real fish’s reference path; orange: the simulated fish’s trail; star: start; red dot: target. World view: the whole episode. Close-up view: the fish’s body and midline. Full videos of all methods: videos/task1_trajectory_following/ in the supplementary material.</figcaption>
+          </figure>
+          <figure>
+            <video autoplay muted loop controls playsinline preload="metadata">
+              <source src="./trajectory-following-rollout.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            <figcaption>Task 1 trajectory-following rollout for White Bass #008 using the BLM + RL policy.</figcaption>
+          </figure>
+          <figure id="figure-5">
+            <a class="figure-link" href="./motion-coverage.png" target="_blank" rel="noopener" aria-label="Open figure 5 at full resolution">
+              <img class="result-image" src="./motion-coverage.png" alt="Figure 5. Motion coverage on the fish of Figure 3. Each point is one 0.5 s body-bending motion of the real fish, projected onto its first two principal components. CPG+RL leaves more of the real motions uncovered than BLM+RL." width="1339" height="500" loading="lazy" />
+            </a>
+            <figcaption>Figure 5. Motion coverage on the fish of Figure 3. Each point is one 0.5 s body-bending motion of the real fish, projected onto its first two principal components. CPG+RL leaves more of the real motions uncovered than BLM+RL.</figcaption>
+          </figure>
+          <figure id="table-1">
+            <a class="figure-link" href="./task1-quantitative-results.png" target="_blank" rel="noopener" aria-label="Open table 1 at full resolution">
+              <img class="result-image" src="./task1-quantitative-results.png" alt="Table 1. Task 1 3D trajectory following on twelve fish (two per species), evaluated on held-out windows: completion rate, Fréchet distance (BL), motion coverage, bending-envelope correlation and speed error ∆v (BL/s). Mean ± standard deviation over fish; each fish is first averaged over three seeds. Best mean per column in bold." width="1322" height="395" loading="lazy" />
+            </a>
+            <figcaption>Table 1. Task 1 3D trajectory following on twelve fish (two per species), evaluated on held-out windows: completion rate, Fréchet distance (BL), motion coverage, bending-envelope correlation and speed error ∆v (BL/s). Mean ± standard deviation over fish; each fish is first averaged over three seeds. Best mean per column in bold.</figcaption>
+          </figure>
+          <h3>Task 2: Target Reaching</h3>
+          <p>BLM + RL reaches 9.0 of 10 targets per episode, with a timeout rate of 0.10 and motion coverage of 0.96, averaged over twelve fish.</p>
+          <figure>
+            <video autoplay muted loop controls playsinline preload="metadata">
+              <source src="./reach-10-targets.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            <figcaption>Task 2: Reach 10 Targets using BLM + RL. View the <a href="https://reach-10-task.vercel.app/" target="_blank" rel="noopener">full task page</a>.</figcaption>
+          </figure>
+          <figure id="figure-6">
+            <a class="figure-link" href="./target-reaching-results.png" target="_blank" rel="noopener" aria-label="Open figure 6 at full resolution">
+              <img class="result-image" src="./target-reaching-results.png" alt="Figure 6. One Task 2 episode of BLM+RL (lake sturgeon 016): the fish reaches all ten targets. Orange line: the fish’s trajectory; spheres: the reach range of each target (radius 0.4 BL); star: start. Full videos of all methods: videos/task2_target_reaching/ in the supplementary material." width="1322" height="661" loading="lazy" />
+            </a>
+            <figcaption>Figure 6. One Task 2 episode of BLM+RL (lake sturgeon 016): the fish reaches all ten targets. Orange line: the fish’s trajectory; spheres: the reach range of each target (radius 0.4 BL); star: start. Full videos of all methods: videos/task2_target_reaching/ in the supplementary material.</figcaption>
+          </figure>
+          <figure id="table-2">
+            <a class="figure-link" href="./task2-quantitative-results.png" target="_blank" rel="noopener" aria-label="Open table 2 at full resolution">
+              <img class="result-image" src="./task2-quantitative-results.png" alt="Table 2. Task 2 target reaching on twelve fish (two per species): targets reached per episode (out of 10), time to reach (s), fraction of attempts that time out, motion coverage and bending-envelope correlation. Mean ± standard deviation over fish; each fish is first averaged over three seeds." width="1428" height="489" loading="lazy" />
+            </a>
+            <figcaption>Table 2. Task 2 target reaching on twelve fish (two per species): targets reached per episode (out of 10), time to reach (s), fraction of attempts that time out, motion coverage and bending-envelope correlation. Mean ± standard deviation over fish; each fish is first averaged over three seeds.</figcaption>
+          </figure>
+          <h3>Case Study: BlueROV Capture</h3>
+          <p>All six capture policies succeed in at least 98% of evaluation episodes, with 381 successful captures out of 384 episodes in total. Training converges within 145–217 epochs.</p>
           <figure>
             <video autoplay muted loop controls playsinline preload="metadata">
               <source src="./rov-capture-task.mp4" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
-            <figcaption>
-              ROV capture task. View the
-              <a href="https://rov-capture.vercel.app/" target="_blank" rel="noopener">full task page</a>.
-            </figcaption>
+            <figcaption>BlueROV capture of a lake sturgeon driven by its own BLM + RL policy. View the <a href="https://rov-capture.vercel.app/" target="_blank" rel="noopener">full task page</a>.</figcaption>
           </figure>
+          <figure id="figure-7">
+            <a class="figure-link" href="./rov-capture-results.png" target="_blank" rel="noopener" aria-label="Open figure 7 at full resolution">
+              <img class="result-image" src="./rov-capture-results.png" alt="Figure 7. Case Study: the ROV scoops up a white bass (white bass 008) with its hand net. Left: start of the episode; right: the fish is inside the net 1.1 s later. Each close-up shows the fish. Full videos: videos/case_study_rov_capture/ in the supplementary material." width="2117" height="344" loading="lazy" />
+            </a>
+            <figcaption>Figure 7. Case Study: the ROV scoops up a white bass (white bass 008) with its hand net. Left: start of the episode; right: the fish is inside the net 1.1 s later. Each close-up shows the fish. Full videos: videos/case_study_rov_capture/ in the supplementary material.</figcaption>
+          </figure>
+          <figure id="table-3">
+            <a class="figure-link" href="./rov-capture-quantitative-results.png" target="_blank" rel="noopener" aria-label="Open table 3 at full resolution">
+              <img class="result-image" src="./rov-capture-quantitative-results.png" alt="Table 3. Case Study: ROV capture of fish driven by their own Task 1 BLM+RL policy (64 evaluation episodes per fish)." width="994" height="506" loading="lazy" />
+            </a>
+            <figcaption>Table 3. Case Study: ROV capture of fish driven by their own Task 1 BLM+RL policy (64 evaluation episodes per fish).</figcaption>
+          </figure>
+          <h3>Human Study: Perceived Biological Fidelity</h3>
+          <p>Twelve fish experts rate 25 blinded clips from three fish and five held-out trajectories. BLM + RL receives the highest mean plausibility (4.48/5), path match (3.65/5), and overall similarity (4.07/5); CPG + RL receives the highest speed match (4.92/5). The mean appearance score across all clips is 4.9/5.</p>
           <figure>
             <video autoplay muted loop controls playsinline preload="metadata">
               <source src="./human-study-task.mp4" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
-            <figcaption>
-              Human study task. View the
-              <a href="https://human-study-rosy.vercel.app/" target="_blank" rel="noopener">full task page</a>.
-            </figcaption>
+            <figcaption>Human study example: real lake sturgeon and BLM + RL simulation. View the <a href="https://human-study-rosy.vercel.app/" target="_blank" rel="noopener">full task page</a>.</figcaption>
           </figure>
-          <figure>
-            <video autoplay muted loop controls playsinline preload="metadata">
-              <source
-                src="./five-baseline-blm.mp4"
-                type="video/mp4"
-              />
-              Your browser does not support the video tag.
-            </video>
-            <figcaption>
-              BLM rollout for the five-baseline fish trajectory task. View the
-              <a href="https://5-baseline-with-one-real-fish.vercel.app/" target="_blank" rel="noopener">full task page</a>.
-            </figcaption>
-          </figure>
-          <figure>
-            <img
-              class="result-image"
-              src="./trajectory-following-results.png"
-              alt="Task 1 trajectory-following comparison from the paper"
-            />
-            <figcaption>
-              Figure 3: Qualitative comparison of five methods following the
-              same reference trajectory in Task 1. Snapshots are shown at
-              0.4-s intervals. The dashed black curve denotes the reference
-              trajectory, the orange trail shows the simulated fish's executed
-              path, and the star marks the real fish's position on the
-              reference trajectory at each time step. Completion status is
-              indicated on the right.
-            </figcaption>
-          </figure>
-          <figure>
-            <video autoplay muted loop controls playsinline preload="auto">
-              <source
-                src="./trajectory-following-rollout.mp4"
-                type="video/mp4"
-              />
-              Your browser does not support the video tag.
-            </video>
-            <figcaption>
-              Task 1 trajectory-following rollout for White Bass #008 using the
-              BLM+RL policy.
-            </figcaption>
-          </figure>
-          <figure>
-            <img
-              class="result-image"
-              src="./task1-quantitative-results.png"
-              alt="Task 1 trajectory-following quantitative results"
-            />
-            <figcaption>
-              Table 1: Task 1 trajectory following on twelve fish (two per
-              species): completion rate, Fréchet distance (BL), curvature
-              Wasserstein distance W1(κ), dominant frequency error Δf(Hz) and
-              speed error Δv(BL/s); mean over fish. Best per column in bold.
-            </figcaption>
-          </figure>
-          <figure>
-            <img
-              class="result-image"
-              src="./quantitative-results.png"
-              alt="Task 2 free-swimming and BlueROV capture quantitative results"
-            />
-            <figcaption>
-              Table 2: Task 2 free swimming from video on six fish (one per
-              species): 20 real initial states, 5 s roll-outs, no reward. Best
-              per column in bold. Table 3: Case Study: ROV capture of
-              video-driven fish.
-            </figcaption>
+          <figure id="table-4">
+            <a class="figure-link" href="./human-study-results.png" target="_blank" rel="noopener" aria-label="Open table 4 at full resolution">
+              <img class="result-image" src="./human-study-results.png" alt="Table 4. Human study: expert ratings (1–5, mean ± standard deviation over the ratings of twelve raters) of 25 Task 1 clips (3 fish, 5 held-out trajectories); anchors are zero-action drifting fish. Appearance is the same asset for every method and is reported once in the text. The videos and questions shown to the raters: videos/human_study_clips/ in the supplementary material and Table 10." width="1262" height="533" loading="lazy" />
+            </a>
+            <figcaption>Table 4. Human study: expert ratings (1–5, mean ± standard deviation over the ratings of twelve raters) of 25 Task 1 clips (3 fish, 5 held-out trajectories); anchors are zero-action drifting fish. Appearance is the same asset for every method and is reported once in the text. The videos and questions shown to the raters: videos/human_study_clips/ in the supplementary material and Table 10.</figcaption>
           </figure>
         </div>
       </section>
 
-      <section id="release" class="section narrow">
+      <section id="validation" class="section results-section">
+        <h2>Validation and Supplementary Results</h2>
+        <div class="results-grid">
+          <figure id="table-8">
+            <a class="figure-link" href="./mesh-fidelity-results.png" target="_blank" rel="noopener" aria-label="Open table 8 at full resolution">
+              <img class="result-image" src="./mesh-fidelity-results.png" alt="Table 8. Silhouette IoU between the generated mesh (orthographic projection of the mesh triangles) and hand-drawn outlines of the real fish: mean ± standard deviation over all 120 fish of the dataset. Side view: the canonical input frame; top view: a frame of the second camera that the image-to-3D model never saw. Similarity: 4-DOF alignment; affine: 6-DOF refinement; body only: both silhouettes with fins morphologically stripped before the affine IoU." width="1322" height="305" loading="lazy" />
+            </a>
+            <figcaption>Table 8. Silhouette IoU between the generated mesh (orthographic projection of the mesh triangles) and hand-drawn outlines of the real fish: mean ± standard deviation over all 120 fish of the dataset. Side view: the canonical input frame; top view: a frame of the second camera that the image-to-3D model never saw. Similarity: 4-DOF alignment; affine: 6-DOF refinement; body only: both silhouettes with fins morphologically stripped before the affine IoU.</figcaption>
+          </figure>
+          <figure id="figure-8">
+            <a class="figure-link" href="./mesh-silhouette-results.png" target="_blank" rel="noopener" aria-label="Open figure 8 at full resolution">
+              <img class="result-image" src="./mesh-silhouette-results.png" alt="Figure 8. Mesh-versus-photo silhouettes for eight of the fish of Table 8, in the side view that the mesh was generated from (left) and in the top view that the image-to-3D model never saw (right). Each group shows the photograph with the hand-drawn outline, the mesh from the same direction, and the two silhouettes after affine alignment with their IoU (gray: both, red: photo only, blue: mesh only)." width="2400" height="1782" loading="lazy" />
+            </a>
+            <figcaption>Figure 8. Mesh-versus-photo silhouettes for eight of the fish of Table 8, in the side view that the mesh was generated from (left) and in the top view that the image-to-3D model never saw (right). Each group shows the photograph with the hand-drawn outline, the mesh from the same direction, and the two silhouettes after affine alignment with their IoU (gray: both, red: photo only, blue: mesh only).</figcaption>
+          </figure>
+        </div>
+        <details class="supplementary-results">
+          <summary>Additional Validation, Task Details, and Comparisons</summary>
+          <div class="results-grid">
+            <figure id="table-6">
+            <a class="figure-link" href="./blm-training-split-results.png" target="_blank" rel="noopener" aria-label="Open table 6 at full resolution">
+              <img class="result-image" src="./blm-training-split-results.png" alt="Table 6. BLM fitted on the training runs only against the released BLM (all frames), eight modes. Angle: principal angles between the two subspaces in joint-angle space (mean over the eight modes; largest of the four leading modes). Variance: share of the joint-angle variance of all frames inside each subspace. Bounds: change of the P99 bounds when only training frames are used (median over modes). Inside: share of held-out frames whose coefficients lie inside the bounds. Error: mean reconstruction error of the held-out midlines." width="2400" height="773" loading="lazy" />
+            </a>
+            <figcaption>Table 6. BLM fitted on the training runs only against the released BLM (all frames), eight modes. Angle: principal angles between the two subspaces in joint-angle space (mean over the eight modes; largest of the four leading modes). Variance: share of the joint-angle variance of all frames inside each subspace. Bounds: change of the P99 bounds when only training frames are used (median over modes). Inside: share of held-out frames whose coefficients lie inside the bounds. Error: mean reconstruction error of the held-out midlines.</figcaption>
+          </figure>
+            <figure id="table-7">
+            <a class="figure-link" href="./midline-accuracy-results.png" target="_blank" rel="noopener" aria-label="Open table 7 at full resolution">
+              <img class="result-image" src="./midline-accuracy-results.png" alt="Table 7. Midline extraction accuracy against human annotations (% of standard length; median over fish, range in brackets). Human: Chamfer / length error between repeated annotations of the same frames." width="1322" height="361" loading="lazy" />
+            </a>
+            <figcaption>Table 7. Midline extraction accuracy against human annotations (% of standard length; median over fish, range in brackets). Human: Chamfer / length error between repeated annotations of the same frames.</figcaption>
+          </figure>
+            <figure id="table-9">
+            <a class="figure-link" href="./blm-joint-mapping-results.png" target="_blank" rel="noopener" aria-label="Open table 9 at full resolution">
+              <img class="result-image" src="./blm-joint-mapping-results.png" alt="Table 9. BLM-to-joint mapping accuracy on the twelve benchmark fish (mean ± std over fish). Joint R2, RMSE and amplitude ratio compare the realized with the commanded joint angles; curvature R2 compares the input and output of each stage alone, and the real IK curvature with the realized one end to end." width="1322" height="695" loading="lazy" />
+            </a>
+            <figcaption>Table 9. BLM-to-joint mapping accuracy on the twelve benchmark fish (mean ± std over fish). Joint R2, RMSE and amplitude ratio compare the realized with the commanded joint angles; curvature R2 compares the input and output of each stage alone, and the real IK curvature with the realized one end to end.</figcaption>
+          </figure>
+            <figure id="figure-9">
+            <a class="figure-link" href="./target-distribution.png" target="_blank" rel="noopener" aria-label="Open figure 9 at full resolution">
+              <img class="result-image" src="./target-distribution.png" alt="Figure 9. Task 2 target distribution, 3000 targets sampled with the evaluation settings. The fish is at the origin with its nose along +x. Top left: top view; the dashed circle is the reach radius (0.4 BL) and the gray rings mark 1, 2 and 3 BL. Top right: side view, horizontal distance against height. Bottom: histograms of the bearing θ (mean 0◦, σ = 30◦, truncated at ±90◦) and the elevation φ (mean 0◦, σ = 10◦, truncated at ±30◦). Most targets lie ahead of the fish at about its depth, with occasional sharp turns and climbs." width="2400" height="1699" loading="lazy" />
+            </a>
+            <figcaption>Figure 9. Task 2 target distribution, 3000 targets sampled with the evaluation settings. The fish is at the origin with its nose along +x. Top left: top view; the dashed circle is the reach radius (0.4 BL) and the gray rings mark 1, 2 and 3 BL. Top right: side view, horizontal distance against height. Bottom: histograms of the bearing θ (mean 0◦, σ = 30◦, truncated at ±90◦) and the elevation φ (mean 0◦, σ = 10◦, truncated at ±30◦). Most targets lie ahead of the fish at about its depth, with occasional sharp turns and climbs.</figcaption>
+          </figure>
+            <figure id="table-10">
+            <a class="figure-link" href="./human-study-questions.png" target="_blank" rel="noopener" aria-label="Open table 10 at full resolution">
+              <img class="result-image" src="./human-study-questions.png" alt="Table 10. Human-study questions, exactly as shown to raters." width="2400" height="961" loading="lazy" />
+            </a>
+            <figcaption>Table 10. Human-study questions, exactly as shown to raters.</figcaption>
+          </figure>
+            <figure id="table-11">
+            <a class="figure-link" href="./prior-work-comparison.png" target="_blank" rel="noopener" aria-label="Open table 11 at full resolution">
+              <img class="result-image" src="./prior-work-comparison.png" alt="Table 11. What is new in Video2SwimFish, compared item by item with the closest prior work. Numbers are from Table 1 and Section 3.1." width="2400" height="1087" loading="lazy" />
+            </a>
+            <figcaption>Table 11. What is new in Video2SwimFish, compared item by item with the closest prior work. Numbers are from Table 1 and Section 3.1.</figcaption>
+          </figure>
+          </div>
+        </details>
+      </section>
+
+      <section id="limitations" class="section narrow">
+        <h2>Limitations</h2>
+        <p>The simulations use an approximate quasi-steady hydrodynamic model rather than full fluid–structure interaction. Sim-to-real transfer has not been tested. Due to compute limits, the benchmark evaluates twelve of the 120 fish, with six in the capture case study. BLM + RL's advantages over a well-tuned CPG are small compared with variation across individual fish.</p>
+      </section>
+
+<section id="release" class="section narrow">
         <h2>Code and Data</h2>
         <p>
           The project website, paired videos, controllable assets, and
