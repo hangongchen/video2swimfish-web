@@ -344,6 +344,29 @@ ul {
   max-width: 860px;
 }
 
+/* Narrow PDF tables need less scaling to keep body text near 22px. */
+.results-grid #table-1 {
+  max-width: 750px;
+}
+
+.results-grid #table-2 {
+  max-width: 710px;
+}
+
+.results-grid #table-3 {
+  max-width: 495px;
+}
+
+.results-grid #table-4 {
+  max-width: 625px;
+}
+
+.results-grid #table-7,
+.results-grid #table-8,
+.results-grid #table-9 {
+  max-width: 585px;
+}
+
 .supplementary-results {
   max-width: 980px;
   margin: 36px auto 0;
